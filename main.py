@@ -12,6 +12,7 @@ import os
 import sys
 import warnings
 
+
 def load_model_components():
     """Load model and preprocessing components with error handling"""
     try:
@@ -120,6 +121,7 @@ class SignLanguageProcessor:
                 self.sequence_buffer.clear()
 
         confidence = 0
+
         if len(self.sequence_buffer) == timesteps:
             # Prepare and scale data
             sequence_data = np.array(list(self.sequence_buffer)).reshape(-1, n_features)
@@ -133,7 +135,7 @@ class SignLanguageProcessor:
             if confidence > self.confidence_threshold:
                 self.current_prediction = LABELS[predicted_idx]
 
-        return self.current_prediction, confidence, hands_present, len(self.sequence_buffer)
+        return self.current_prediction, confidence
 
 
 # FastAPI app
@@ -176,15 +178,31 @@ async def websocket_endpoint(websocket: WebSocket):
                 frame = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
 
                 if frame is not None:
-                    prediction, confidence, hands_present, buffer_size = processors[websocket].process_frame(frame)
-                    response = f"{prediction or 'No prediction'},{confidence:.2f},{hands_present},{buffer_size}"
-                    await websocket.send_text(response)
+                    current_prediction, confidence = processors[websocket].process_frame(frame)
+                    # Send JSON response using send_json
+                    await websocket.send_json({
+                        "status": "prediction",
+                        "prediction": current_prediction,
+                        "confidence": float(confidence)
+                    })
                 else:
-                    await websocket.send_text("No prediction,0.0,False,0")
+                    # Send error response as JSON
+                    await websocket.send_json({
+                        "status": "error",
+                        "prediction": None,
+                        "confidence": 0.0,
+                        "error": "Failed to decode frame"
+                    })
 
             except Exception as e:
                 print(f"Frame processing error: {e}")
-                await websocket.send_text("No prediction,0.0,False,0")
+                # Send error response as JSON
+                await websocket.send_json({
+                    "status": "error",
+                    "prediction": None,
+                    "confidence": 0.0,
+                    "error": str(e)
+                })
 
     except WebSocketDisconnect:
         pass

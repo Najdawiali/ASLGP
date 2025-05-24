@@ -108,7 +108,7 @@ class SignLanguageProcessor:
         return features, True
 
     def process_frame(self, frame):
-        """Process single frame and return prediction"""
+        """Process single frame and return prediction with hands detection info"""
         features, hands_present = self.extract_features(frame)
 
         if hands_present:
@@ -135,7 +135,14 @@ class SignLanguageProcessor:
             if confidence > self.confidence_threshold:
                 self.current_prediction = LABELS[predicted_idx]
 
-        return self.current_prediction, confidence
+        # Return prediction, confidence, hands detection status, and buffer level
+        return {
+            'prediction': self.current_prediction,
+            'confidence': confidence,
+            'hands_detected': hands_present,
+            'buffer_level': len(self.sequence_buffer),
+            'frames_since_hands': self.frames_since_hands
+        }
 
 
 # FastAPI app
@@ -178,12 +185,16 @@ async def websocket_endpoint(websocket: WebSocket):
                 frame = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
 
                 if frame is not None:
-                    current_prediction, confidence = processors[websocket].process_frame(frame)
-                    # Send JSON response using send_json
+                    result = processors[websocket].process_frame(frame)
+
+                    # Send comprehensive JSON response
                     await websocket.send_json({
                         "status": "prediction",
-                        "prediction": current_prediction,
-                        "confidence": float(confidence)
+                        "prediction": result['prediction'],
+                        "confidence": float(result['confidence']),
+                        "hands_detected": result['hands_detected'],
+                        "buffer_level": result['buffer_level'],
+                        "frames_since_hands": result['frames_since_hands']
                     })
                 else:
                     # Send error response as JSON
@@ -191,6 +202,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         "status": "error",
                         "prediction": None,
                         "confidence": 0.0,
+                        "hands_detected": False,
+                        "buffer_level": 0,
                         "error": "Failed to decode frame"
                     })
 
@@ -201,6 +214,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     "status": "error",
                     "prediction": None,
                     "confidence": 0.0,
+                    "hands_detected": False,
+                    "buffer_level": 0,
                     "error": str(e)
                 })
 

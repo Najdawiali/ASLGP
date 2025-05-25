@@ -9,9 +9,6 @@ import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import os
-import sys
-import warnings
-
 
 def load_model_components():
     """Load model and preprocessing components with error handling"""
@@ -134,6 +131,7 @@ class SignLanguageProcessor:
 
             if confidence > self.confidence_threshold:
                 self.current_prediction = LABELS[predicted_idx]
+                self.sequence_buffer.clear()
 
         # Return prediction, confidence, hands detection status, and buffer level
         return {
@@ -195,16 +193,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         "hands_detected": result['hands_detected'],
                         "buffer_level": result['buffer_level'],
                         "frames_since_hands": result['frames_since_hands']
-                    })
-                else:
-                    # Send error response as JSON
-                    await websocket.send_json({
-                        "status": "error",
-                        "prediction": None,
-                        "confidence": 0.0,
-                        "hands_detected": False,
-                        "buffer_level": 0,
-                        "error": "Failed to decode frame"
                     })
 
             except Exception as e:

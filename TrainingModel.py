@@ -199,7 +199,6 @@ augmenter = HandLandmarkAugmenter(
     noise_std=0.005,             
 )
 
-# Apply data augmentation
 augmented_X, augmented_y = augment_dataset(
     sequence_data, 
     categorical_labels, 
@@ -209,7 +208,6 @@ augmented_X, augmented_y = augment_dataset(
 
 print(f"Augmented dataset shape: {augmented_X.shape}")
 
-# Split the augmented data
 X_train, X_test, y_train, y_test = train_test_split(
     augmented_X, augmented_y, test_size=0.2,
     shuffle=True, stratify=np.argmax(augmented_y, axis=1), random_state=42

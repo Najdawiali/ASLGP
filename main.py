@@ -13,7 +13,7 @@ import os
 
 def load_model_components():
     try:
-        with open('./lstm_preprocessing_augmentedV2.pickle', 'rb') as f:
+        with open('./gru_preprocessing_augmented.pickle', 'rb') as f:
             preproc = pickle.load(f)
 
         interpreter = tf.lite.Interpreter(model_path="gesture_model.tflite")

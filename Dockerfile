@@ -12,7 +12,7 @@ WORKDIR /app
 # Copy files
 COPY main.py .
 COPY gesture_model.tflite .
-COPY lstm_preprocessing_augmentedV2.pickle .
+COPY gru_preprocessing_augmented.pickle .
 COPY requirements.txt .
 
 # Install Python dependencies

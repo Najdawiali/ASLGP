@@ -106,7 +106,6 @@ class SignLanguageProcessor:
         confidence = 0
 
         if len(self.sequence_buffer) == timesteps:
-            # Prepare and scale data
             sequence_data = np.array(list(self.sequence_buffer)).reshape(-1, n_features)
             sequence_scaled = scaler.transform(sequence_data).reshape(1, timesteps, n_features)
 
@@ -169,14 +168,12 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
 
             try:
-                # Decode image
                 image_data = base64.b64decode(data.split(",")[1])
                 frame = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
 
                 if frame is not None:
                     result = processors[websocket].process_frame(frame)
 
-                    # Send comprehensive JSON response
                     await websocket.send_json({
                         "status": "prediction",
                         "prediction": result['prediction'],

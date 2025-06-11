@@ -14,11 +14,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 class HandLandmarkAugmenter:
     
-    def __init__(self, 
-                 translation_range=0.1,
-                 scale_range=0.2,
-                 rotation_range=15,
-                 noise_std=0.01):
+    def __init__(self, translation_range, scale_range, rotation_range, noise_std):
       
         self.translation_range = translation_range
         self.scale_range = scale_range
